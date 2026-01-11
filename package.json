@@ -1,0 +1,38 @@
+{
+  "name": "suivi-academique-etudiants",
+  "version": "1.0.0",
+  "description": "Système de suivi académique des étudiants avec MongoDB",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "init": "node scripts/init-database.js",
+    "add-student": "node scripts/add-student.js",
+    "add-course": "node scripts/add-course.js",
+    "add-grade": "node scripts/add-grade.js",
+    "list-students": "node scripts/list-students.js",
+    "list-courses": "node scripts/list-courses.js",
+    "stats-student": "node scripts/stats-student.js",
+    "stats-course": "node scripts/stats-course.js",
+    "stats-global": "node scripts/stats-global.js",
+    "init-users": "node scripts/init-users.js",
+    "start": "node server.js",
+    "dev": "node server.js",
+    "init-all": "npm run init && npm run init-users"
+  },
+  "keywords": [
+    "mongodb",
+    "academic",
+    "students",
+    "grades"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongodb": "^6.3.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "pdfkit": "^0.14.0"
+  }
+}

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi Académique des Étudiants</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Modal de connexion -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h2>🔐 Connexion</h2>
+            <form id="login-form">
+                <input type="text" id="login-username" placeholder="Nom d'utilisateur" required>
+                <input type="password" id="login-password" placeholder="Mot de passe" required>
+                <button type="submit">Se connecter</button>
+            </form>
+            <div id="login-error" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div id="notifications-container"></div>
+
+    <div class="container" id="main-container" style="display: none;">
+        <header>
+            <div class="header-top">
+                <h1>📚 Système de Suivi Académique</h1>
+                <div class="header-actions">
+                    <span id="user-info" style="margin-right: 10px; color: white;"></span>
+                    <button class="action-btn" onclick="exportPDF()" title="Exporter en PDF">
+                        📄 PDF
+                    </button>
+                    <button class="action-btn" onclick="exportData()" title="Exporter les données">
+                        📥 CSV
+                    </button>
+                    <button class="action-btn" onclick="refreshData()" title="Actualiser">
+                        🔄 Actualiser
+                    </button>
+                    <button class="action-btn" onclick="logout()" title="Déconnexion">
+                        🚪 Déconnexion
+                    </button>
+                </div>
+            </div>
+            <nav class="tabs">
+                <button class="tab-btn active" data-tab="dashboard">
+                    <span>📊</span> Tableau de bord
+                </button>
+                <button class="tab-btn" data-tab="students">
+                    <span>👤</span> Étudiants
+                </button>
+                <button class="tab-btn" data-tab="courses">
+                    <span>📚</span> Cours
+                </button>
+                <button class="tab-btn" data-tab="add">
+                    <span>➕</span> Ajouter
+                </button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Dashboard -->
+            <section id="dashboard" class="tab-content active">
+                <div class="dashboard-header">
+                    <div>
+                        <h2>📊 Tableau de bord</h2>
+                        <p class="dashboard-subtitle">Vue d'ensemble complète de votre système académique</p>
+                    </div>
+                    <div class="dashboard-filters">
+                        <select id="filter-period" onchange="loadDashboard()">
+                            <option value="all">📅 Toutes les périodes</option>
+                            <option value="month">📅 Ce mois</option>
+                            <option value="year">📅 Cette année</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Cartes statistiques principales -->
+                <div class="stats-grid-large">
+                    <div class="stat-card highlight stat-card-students">
+                        <div class="stat-icon-wrapper">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-trend" id="students-trend">↗️</div>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Étudiants</h3>
+                            <div class="stat-value" id="stat-students">-</div>
+                            <div class="stat-label">Total inscrits</div>
+                        </div>
+                        <div class="stat-decoration"></div>
+                    </div>
+                    <div class="stat-card highlight stat-card-courses">
+                        <div class="stat-icon-wrapper">
+                            <div class="stat-icon">📚</div>
+                            <div class="stat-trend" id="courses-trend">↗️</div>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Cours</h3>
+                            <div class="stat-value" id="stat-courses">-</div>
+                            <div class="stat-label">Cours disponibles</div>
+                        </div>
+                        <div class="stat-decoration"></div>
+                    </div>
+                    <div class="stat-card highlight stat-card-grades">
+                        <div class="stat-icon-wrapper">
+                            <div class="stat-icon">📝</div>
+                            <div class="stat-trend" id="grades-trend">↗️</div>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Notes</h3>
+                            <div class="stat-value" id="stat-grades">-</div>
+                            <div class="stat-label">Notes enregistrées</div>
+                        </div>
+                        <div class="stat-decoration"></div>
+                    </div>
+                    <div class="stat-card highlight stat-card-average">
+                        <div class="stat-icon-wrapper">
+                            <div class="stat-icon">⭐</div>
+                            <div class="stat-trend" id="average-trend">↗️</div>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Moyenne générale</h3>
+                            <div class="stat-value" id="stat-average">-</div>
+                            <div class="stat-label">Performance globale</div>
+                        </div>
+                        <div class="stat-decoration"></div>
+                    </div>
+                </div>
+
+                <!-- Graphiques -->
+                <div class="charts-grid">
+                    <div class="chart-card modern-card">
+                        <div class="chart-header">
+                            <h3>📊 Répartition des moyennes par cours</h3>
+                            <span class="chart-badge">Analyse</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="courseChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card modern-card">
+                        <div class="chart-header">
+                            <h3>👤 Top 5 étudiants</h3>
+                            <span class="chart-badge">Classement</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="studentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistiques détaillées -->
+                <div class="stats-grid">
+                    <div class="stat-card modern-card">
+                        <div class="card-header">
+                            <h3>📚 Moyennes par cours</h3>
+                            <button class="icon-btn" onclick="exportPDF()" title="Exporter en PDF">📄</button>
+                        </div>
+                        <div id="course-averages" class="stats-list enhanced"></div>
+                    </div>
+                    <div class="stat-card modern-card">
+                        <div class="card-header">
+                            <h3>👤 Moyennes par étudiant</h3>
+                            <button class="icon-btn" onclick="exportPDF()" title="Exporter en PDF">📄</button>
+                        </div>
+                        <div id="student-averages" class="stats-list enhanced"></div>
+                    </div>
+                </div>
+
+                <!-- Indicateurs de performance -->
+                <div class="performance-indicators">
+                    <div class="indicator-card">
+                        <div class="indicator-icon success">✅</div>
+                        <div class="indicator-content">
+                            <h4>Taux de réussite</h4>
+                            <div class="indicator-value" id="success-rate">-</div>
+                        </div>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-icon warning">⚠️</div>
+                        <div class="indicator-content">
+                            <h4>Étudiants en difficulté</h4>
+                            <div class="indicator-value" id="struggling-students">-</div>
+                        </div>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-icon info">📈</div>
+                        <div class="indicator-content">
+                            <h4>Évolution</h4>
+                            <div class="indicator-value" id="evolution">+5%</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Étudiants -->
+            <section id="students" class="tab-content">
+                <div class="section-header">
+                    <h2>👤 Étudiants</h2>
+                    <div class="section-actions">
+                        <button class="btn-filter" onclick="toggleFilter('students')">🔍 Filtres</button>
+                    </div>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="student-search" placeholder="🔍 Rechercher un étudiant...">
+                    <select id="student-sort" onchange="loadStudents()">
+                        <option value="name">Trier par nom</option>
+                        <option value="id">Trier par ID</option>
+                    </select>
+                </div>
+                <div id="students-filters" class="filters-panel" style="display: none;">
+                    <div class="filter-group">
+                        <label>Moyenne minimale:</label>
+                        <input type="number" id="filter-student-min" min="0" max="20" step="0.1" onchange="loadStudents()">
+                    </div>
+                    <div class="filter-group">
+                        <label>Moyenne maximale:</label>
+                        <input type="number" id="filter-student-max" min="0" max="20" step="0.1" onchange="loadStudents()">
+                    </div>
+                </div>
+                <div id="students-list" class="cards-container"></div>
+            </section>
+
+            <!-- Cours -->
+            <section id="courses" class="tab-content">
+                <div class="section-header">
+                    <h2>📚 Cours</h2>
+                    <div class="section-actions">
+                        <button class="btn-filter" onclick="toggleFilter('courses')">🔍 Filtres</button>
+                    </div>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="course-search" placeholder="🔍 Rechercher un cours...">
+                    <select id="course-sort" onchange="loadCourses()">
+                        <option value="name">Trier par nom</option>
+                        <option value="credits">Trier par crédits</option>
+                    </select>
+                </div>
+                <div id="courses-filters" class="filters-panel" style="display: none;">
+                    <div class="filter-group">
+                        <label>Crédits minimum:</label>
+                        <input type="number" id="filter-course-credits" min="1" onchange="loadCourses()">
+                    </div>
+                </div>
+                <div id="courses-list" class="cards-container"></div>
+            </section>
+
+            <!-- Ajouter -->
+            <section id="add" class="tab-content">
+                <h2>➕ Ajouter des données</h2>
+                <div class="add-forms">
+                    <div class="form-card">
+                        <h3>Ajouter un étudiant</h3>
+                        <form id="add-student-form">
+                            <input type="text" id="student-id" placeholder="ID étudiant (ex: S006)" required>
+                            <input type="text" id="student-firstname" placeholder="Prénom" required>
+                            <input type="text" id="student-lastname" placeholder="Nom" required>
+                            <button type="submit">Ajouter</button>
+                        </form>
+                    </div>
+                    <div class="form-card">
+                        <h3>Ajouter un cours</h3>
+                        <form id="add-course-form">
+                            <input type="text" id="course-id" placeholder="ID cours (ex: C005)" required>
+                            <input type="text" id="course-name" placeholder="Nom du cours" required>
+                            <input type="number" id="course-credits" placeholder="Crédits" min="1" required>
+                            <button type="submit">Ajouter</button>
+                        </form>
+                    </div>
+                    <div class="form-card">
+                        <h3>Ajouter une note</h3>
+                        <form id="add-grade-form">
+                            <select id="grade-student" required>
+                                <option value="">Sélectionner un étudiant</option>
+                            </select>
+                            <select id="grade-course" required>
+                                <option value="">Sélectionner un cours</option>
+                            </select>
+                            <input type="number" id="grade-value" placeholder="Note (0-20)" min="0" max="20" step="0.1" required>
+                            <input type="date" id="grade-date">
+                            <button type="submit">Ajouter</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal pour les détails -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
