@@ -882,14 +882,18 @@ async function editStudent(studentId, firstName, lastName) {
     if (newLastName === null || !newLastName.trim()) return;
 
     try {
+        console.log('📝 Modification étudiant:', { studentId, authToken: authToken ? 'présent' : 'absent' });
         const response = await fetch(`/api/students/${studentId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
             body: JSON.stringify({ first_name: newFirstName.trim(), last_name: newLastName.trim() })
         });
         const result = await response.json();
         
-        if (result.success) {
+        if (response.ok && result.success) {
             showMessage('success', 'Étudiant modifié avec succès!');
             loadStudents();
             loadDashboard();
@@ -987,14 +991,21 @@ async function editCourse(courseId, name, credits) {
     }
 
     try {
+        console.log('📝 Modification du cours:', { courseId, authToken: authToken ? 'présent' : 'absent' });
         const response = await fetch(`/api/courses/${courseId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
             body: JSON.stringify({ name: newName.trim(), credits: creditsNum })
         });
+        
+        console.log('📡 Réponse reçue - Status:', response.status);
         const result = await response.json();
+        console.log('📊 Données:', result);
 
-        if (result.success) {
+        if (response.ok && result.success) {
             showMessage('success', 'Cours modifié avec succès!');
             loadCourses();
             loadDashboard();
@@ -1004,7 +1015,7 @@ async function editCourse(courseId, name, credits) {
             showMessage('error', result.error || 'Erreur lors de la modification');
         }
     } catch (error) {
-        console.error('Erreur:', error);
+        console.error('❌ Erreur:', error);
         showMessage('error', 'Erreur de connexion au serveur');
     }
 }
@@ -1024,7 +1035,8 @@ async function deleteCourse(courseId) {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${authToken}`
             }
         });
         
@@ -1071,16 +1083,21 @@ async function editGrade(gradeId, studentId, courseId, grade, date) {
     const dateStr = date.split('T')[0];
     const newDate = prompt('Nouvelle date (YYYY-MM-DD):', dateStr) || dateStr;
 
-    const result = await fetch(`/api/grades/${gradeId}`, {
+    console.log('📝 Modification note:', { gradeId, authToken: authToken ? 'présent' : 'absent' });
+    const response = await fetch(`/api/grades/${gradeId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+        },
         body: JSON.stringify({ 
             student_id: studentId, 
             course_id: courseId, 
             grade: parseFloat(newGrade),
             date: newDate
         })
-    }).then(r => r.json());
+    });
+    const result = await response.json();
 
     if (result.success) {
         showMessage('success', 'Note modifiée avec succès!');
@@ -1118,7 +1135,8 @@ async function deleteGrade(gradeId) {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${authToken}`
             }
         });
         
